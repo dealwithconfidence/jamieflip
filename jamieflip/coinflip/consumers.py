@@ -10,7 +10,9 @@ class CoinflipConsumer(WebsocketConsumer):
             self.channel_name
         )
         self.accept()
-        coinflips = Coinflip.objects.filter(is_open=True)
+        coinflips = Coinflip.objects.filter(is_open=True).values(
+                'id', 'wager_amount', 'creator__username', 'creator__id', 'creator_choice_is_heads'
+            )
         self.send(text_data=json.dumps({
             'type': 'initial',
             'coinflips': list(coinflips.values())

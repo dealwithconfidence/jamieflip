@@ -146,6 +146,7 @@
     let currentUserId = {{ user_id|default:0 }}
     let balance = {{ balance|default:0 }}
     let creatorChoiceIsHeads = null
+    
  
 
     function getCookie(name) {
@@ -353,19 +354,25 @@
     function addFlipToTable(flip) {
         const emptyRow = document.getElementById('empty-row')
         if (emptyRow) emptyRow.remove()
- 
-        const isOwn = flip.creator === currentUsername
+
+        const creatorName = flip.creator || flip['creator__username']
+        const creatorId = flip.creator_id || flip['creator__id']
+        const isOwn = creatorName === currentUsername
+        const flipId = flip.coinflip_id || flip.id
+
         const row = document.createElement('tr')
-        row.id = `flip-${flip.coinflip_id || flip.id}`
+        row.id = `flip-${flipId}`
         row.innerHTML = `
-            <td><span class="username-link" onclick="viewProfile(${flip.creator_id})">${flip.creator}</span></td>
+            <td><span class="username-link" onclick="viewProfile(${creatorId})">${creatorName}</span></td>
             <td>${flip.creator_choice_is_heads ? 'Heads' : 'Tails'}</td>
             <td>$${flip.wager_amount}</td>
             <td>${flip.creator_choice_is_heads ? 'Tails' : 'Heads'}</td>
-            <td>${!isOwn ? `<button class="join-btn" onclick="joinFlip(${flip.coinflip_id || flip.id})">Join</button>` : ''}</td>
+            <td>${!isOwn ? `<button class="join-btn" onclick="joinFlip(${flipId})">Join</button>` : ''}</td>
         `
         document.getElementById('coinflip-body').appendChild(row)
     }
+
+
  
     async function removeFlipFromTable(data) {
         const row = document.getElementById(`flip-${data.coinflip_id}`)
