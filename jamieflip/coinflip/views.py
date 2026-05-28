@@ -9,6 +9,7 @@ from django.db import models
 from asgiref.sync import async_to_sync
 from .models import Coinflip
 from channels.layers import get_channel_layer
+from django.middleware.csrf import get_token
 import random
 import json
 from django.http import JsonResponse
@@ -57,6 +58,7 @@ def login_view(request):
             return JsonResponse({'error' : str(e)})
 
 def index(request):
+    get_token(request)
     if request.user.is_authenticated:
         return render(request, 'coinflip/index.html', {
             'is_authenticated': True,
