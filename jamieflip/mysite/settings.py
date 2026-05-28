@@ -28,7 +28,7 @@ SECRET_KEY = 'django-insecure-p!$!4!x9j_!$^z984vxuhbuzw67urhfhz$9&hmi*$q)q^!7rpx
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['jamieflip.onrender.com', 'localhost', '127.0.0.1']
 
 
 # Application definition
