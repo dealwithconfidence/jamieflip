@@ -15,7 +15,7 @@ class CoinflipConsumer(WebsocketConsumer):
             )
         self.send(text_data=json.dumps({
             'type': 'initial',
-            'coinflips': list(coinflips.values())
+            'coinflips': list(coinflips)
         }))
     def disconnect(self, close_code):
         async_to_sync(self.channel_layer.group_discard)(
