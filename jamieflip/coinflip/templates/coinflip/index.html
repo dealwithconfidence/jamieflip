@@ -420,13 +420,13 @@
  
     function handleSocketClose() {
         setTimeout(() => {
-            socket = new WebSocket('ws://' + window.location.host + '/ws/')
+            socket = new WebSocket('wss://' + window.location.host + '/ws/')
             socket.onmessage = handleSocketMessage
             socket.onclose = handleSocketClose
         }, 3000)
     }
  
-    let socket = new WebSocket('ws://' + window.location.host + '/ws/')
+    let socket = new WebSocket('wss://' + window.location.host + '/ws/')
     socket.onmessage = handleSocketMessage
     socket.onclose = handleSocketClose
  
