@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>JamieFlip</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: sans-serif; background: #f5f5f5; }
+ 
+        nav {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            padding: 0 1.5rem;
+            height: 56px;
+            background: white;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        .logo { font-weight: bold; font-size: 18px; flex: 1; }
+ 
+        .container { max-width: 800px; margin: 2rem auto; padding: 0 1rem; }
+ 
+        table { width: 100%; border-collapse: collapse; background: white; border-radius: 12px; overflow: hidden; border: 1px solid #e0e0e0; }
+        th { text-align: left; padding: 12px 16px; font-size: 13px; color: #888; font-weight: 500; border-bottom: 1px solid #e0e0e0; }
+        td { padding: 12px 16px; font-size: 14px; border-bottom: 1px solid #f0f0f0; }
+        tr:last-child td { border-bottom: none; }
+        .username-link { cursor: pointer; color: #333; text-decoration: underline; }
+        .join-btn { padding: 6px 14px; font-size: 13px; border: 1px solid #ccc; border-radius: 6px; background: white; cursor: pointer; }
+        .join-btn:hover { background: #f0f0f0; }
+        #empty-row td { color: #aaa; text-align: center; }
+ 
+        .overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0,0,0,0.45);
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+        }
+        .overlay.active { display: flex; }
+ 
+        .popup {
+            background: white;
+            border-radius: 12px;
+            border: 1px solid #e0e0e0;
+            padding: 1.5rem;
+            width: 320px;
+            position: relative;
+        }
+        .popup h2 { font-size: 16px; font-weight: 500; margin-bottom: 1rem; }
+        .popup input { width: 100%; padding: 8px 12px; border: 1px solid #ccc; border-radius: 8px; font-size: 14px; margin-bottom: 0.75rem; }
+        .popup button { padding: 8px 16px; border: 1px solid #ccc; border-radius: 8px; background: white; cursor: pointer; font-size: 14px; }
+        .full-btn { width: 100%; margin-bottom: 0.5rem; }
+        .close-btn { position: absolute; top: 12px; right: 12px; background: none; border: none; font-size: 20px; color: #888; cursor: pointer; padding: 0; }
+        .error { font-size: 13px; color: red; min-height: 18px; margin-top: 4px; }
+        .choice-row { display: flex; gap: 8px; margin-bottom: 0.75rem; }
+        .choice-row button { flex: 1; }
+        .choice-row button.selected { background: #333; color: white; border-color: #333; }
+        .stat-row { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid #f0f0f0; font-size: 14px; }
+        .stat-row:last-child { border-bottom: none; }
+        .stat-label { color: #888; }
+    </style>
+</head>
+<body>
+ 
+<nav>
+    <span class="logo">JamieFlip</span>
+    <div id="navbar-actions"></div>
+</nav>
+ 
+<div class="container">
+    <table>
+        <thead>
+            <tr>
+            </tr>
+        </thead>
+        <tbody id="coinflip-body">
+            <tr id="empty-row"><td colspan="5">No open coinflips</td></tr>
+        </tbody>
+    </table>
+</div>
+ 
+<div class="overlay" id="login-overlay" onclick="handleOverlayClick(event, 'login')">
+    <div class="popup">
+        <button class="close-btn" onclick="hidePopup('login')">×</button>
+        <h2>Login</h2>
+        <input type="text" id="login-username" placeholder="Username">
+        <input type="password" id="login-password" placeholder="Password">
+        <button class="full-btn" onclick="submitLogin()">Login</button>
+        <p class="error" id="login-error"></p>
+    </div>
+</div>
+ 
+<!-- SIGNUP POPUP -->
+<div class="overlay" id="signup-overlay" onclick="handleOverlayClick(event, 'signup')">
+    <div class="popup">
+        <button class="close-btn" onclick="hidePopup('signup')">×</button>
+        <h2>Signup</h2>
+        <input type="text" id="signup-username" placeholder="Username">
+        <input type="password" id="signup-password" placeholder="Password">
+        <button class="full-btn" onclick="submitSignup()">Create account</button>
+        <p class="error" id="signup-error"></p>
+    </div>
+</div>
+ 
+<!-- CREATE FLIP POPUP -->
+<div class="overlay" id="create-overlay" onclick="handleOverlayClick(event, 'create')">
+    <div class="popup">
+        <button class="close-btn" onclick="hidePopup('create')">×</button>
+        <h2>Create Coinflip</h2>
+        <input type="number" id="wager-input" placeholder="Wager amount">
+        <div class="choice-row">
+            <button id="heads-btn" onclick="setChoice(true)">Heads</button>
+            <button id="tails-btn" onclick="setChoice(false)">Tails</button>
+        </div>
+        <button class="full-btn" onclick="submitCreate()">Create</button>
+        <p class="error" id="create-error"></p>
+    </div>
+</div>
+ 
+<!-- DAILY CLAIM POPUP -->
+<div class="overlay" id="daily-overlay" onclick="handleOverlayClick(event, 'daily')">
+    <div class="popup">
+        <button class="close-btn" onclick="hidePopup('daily')">×</button>
+        <h2>Daily Claim</h2>
+        <p id="daily-status" style="font-size:14px; margin-bottom:1rem; color:#555;"></p>
+        <button class="full-btn" id="daily-claim-btn" onclick="submitDailyClaim()">Claim $100</button>
+        <p class="error" id="daily-error"></p>
+    </div>
+</div>
+ 
+
+<div class="overlay" id="profile-overlay" onclick="handleOverlayClick(event, 'profile')">
+    <div class="popup">
+        <button class="close-btn" onclick="hidePopup('profile')">×</button>
+        <h2 id="profile-username"></h2>
+        <div id="profile-stats"></div>
+    </div>
+</div>
+ 
+<script>
+
+    let isAuthenticated = {{ is_authenticated|lower }}
+    let currentUsername = "{{ username }}"
+    let currentUserId = {{ user_id|default:0 }}
+    let balance = {{ balance|default:0 }}
+    let creatorChoiceIsHeads = null
+ 
+
+    function getCookie(name) {
+        const value = `; ${document.cookie}`
+        const parts = value.split(`; ${name}=`)
+        if (parts.length === 2) return parts.pop().split(';').shift()
+    }
+ 
+
+    function showPopup(name) {
+        document.getElementById(name + '-overlay').classList.add('active')
+    }
+ 
+    function hidePopup(name) {
+        document.getElementById(name + '-overlay').classList.remove('active')
+        const err = document.getElementById(name + '-error')
+        if (err) err.textContent = ''
+    }
+ 
+    function handleOverlayClick(e, name) {
+        if (e.target === document.getElementById(name + '-overlay')) {
+            hidePopup(name)
+        }
+    }
+ 
+    function renderNavbar() {
+        const actions = document.getElementById('navbar-actions')
+        if (isAuthenticated) {
+            actions.innerHTML = `
+                <span id="balance-display">$${balance}</span>
+                <button onclick="checkDailyAndShow()">Daily $</button>
+                <button onclick="showPopup('create')">Create Flip</button>
+                <button onclick="viewProfile(${currentUserId})">${currentUsername}</button>
+            `
+        } else {
+            actions.innerHTML = `
+                <button onclick="showPopup('login')">Login</button>
+                <button onclick="showPopup('signup')">Signup</button>
+            `
+        }
+    }
+ 
+
+    function updateBalance(newBalance) {
+        balance = newBalance
+        const el = document.getElementById('balance-display')
+        if (el) el.textContent = `$${balance}`
+    }
+ 
+
+    async function submitLogin() {
+        const username = document.getElementById('login-username').value
+        const password = document.getElementById('login-password').value
+        if (!username || !password) {
+            document.getElementById('login-error').textContent = 'Please fill in all fields'
+            return
+        }
+        const response = await fetch('/login/', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') },
+            body: JSON.stringify({ username, password })
+        })
+        const data = await response.json()
+        if (data.error) {
+            document.getElementById('login-error').textContent = data.error
+        } else {
+            isAuthenticated = true
+            currentUsername = data.username
+            currentUserId = data.user_id
+            balance = data.balance
+            hidePopup('login')
+            renderNavbar()
+        }
+    }
+
+    async function submitSignup() {
+        const username = document.getElementById('signup-username').value
+        const password = document.getElementById('signup-password').value
+        if (!username || !password) {
+            document.getElementById('signup-error').textContent = 'Please fill in all fields'
+            return
+        }
+        const response = await fetch('/signup/', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') },
+            body: JSON.stringify({ username, password })
+        })
+        const data = await response.json()
+        if (data.error) {
+            document.getElementById('signup-error').textContent = data.error
+        } else {
+            isAuthenticated = true
+            currentUsername = data.username
+            currentUserId = data.user_id
+            balance = data.balance
+            hidePopup('signup')
+            renderNavbar()
+        }
+    }
+ 
+
+    function setChoice(isHeads) {
+        creatorChoiceIsHeads = isHeads
+        document.getElementById('heads-btn').classList.toggle('selected', isHeads)
+        document.getElementById('tails-btn').classList.toggle('selected', !isHeads)
+    }
+ 
+    async function submitCreate() {
+        const wager = parseInt(document.getElementById('wager-input').value)
+        if (!wager || wager <= 0) {
+            document.getElementById('create-error').textContent = 'Enter a valid wager'
+            return
+        }
+        if (creatorChoiceIsHeads === null) {
+            document.getElementById('create-error').textContent = 'Pick heads or tails'
+            return
+        }
+        const response = await fetch('/create/', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') },
+            body: JSON.stringify({ wager_amount: wager, creator_choice_is_heads: creatorChoiceIsHeads })
+        })
+        const data = await response.json()
+        if (data.login) { hidePopup('create'); showPopup('login'); return }
+        if (data.error) {
+            document.getElementById('create-error').textContent = data.error
+        } else {
+            updateBalance(balance - wager)
+            hidePopup('create')
+            creatorChoiceIsHeads = null
+            document.getElementById('wager-input').value = ''
+            document.getElementById('heads-btn').classList.remove('selected')
+            document.getElementById('tails-btn').classList.remove('selected')
+        }
+    }
+ 
+
+    async function joinFlip(coinflipId) {
+        const response = await fetch('/join/', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') },
+            body: JSON.stringify({ coinflip_id: coinflipId })
+        })
+        const data = await response.json()
+        if (data.login) { showPopup('login'); return }
+        if (data.error) { alert(data.error) }
+    }
+ 
+
+    async function checkDailyAndShow() {
+        const response = await fetch('/daily/', {
+            headers: { 'X-CSRFToken': getCookie('csrftoken') }
+        })
+        const data = await response.json()
+        if (data.login) { showPopup('login'); return }
+        const statusEl = document.getElementById('daily-status')
+        const claimBtn = document.getElementById('daily-claim-btn')
+        if (data.status === 'available') {
+            statusEl.textContent = '$100 is available to claim'
+            claimBtn.disabled = false
+        } else {
+            statusEl.textContent = 'Already claimed today'
+            claimBtn.disabled = true
+        }
+        showPopup('daily')
+    }
+ 
+    async function submitDailyClaim() {
+        const response = await fetch('/dailyclaim/', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') }
+        })
+        const data = await response.json()
+        if (data.login) { hidePopup('daily'); showPopup('login'); return }
+        if (data.error) {
+            document.getElementById('daily-error').textContent = data.error
+        } else {
+            updateBalance(data.new_balance)
+            hidePopup('daily')
+        }
+    }
+ 
+
+    async function viewProfile(userId) {
+        const response = await fetch('/profile/', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') },
+            body: JSON.stringify({ profile_id: userId })
+        })
+        const data = await response.json()
+        if (data.error) { alert(data.error); return }
+        document.getElementById('profile-username').textContent = data.username
+        document.getElementById('profile-stats').innerHTML = `
+            <div class="stat-row"><span class="stat-label">Balance</span><span>$${data.balance}</span></div>
+            <div class="stat-row"><span class="stat-label">Wins</span><span>${data.total_wins}</span></div>
+            <div class="stat-row"><span class="stat-label">Losses</span><span>${data.total_losses}</span></div>
+            <div class="stat-row"><span class="stat-label">Total Flips</span><span>${data.total_flips}</span></div>
+            <div class="stat-row"><span class="stat-label">Total Wagered</span><span>$${data.total_wagered}</span></div>
+            <div class="stat-row"><span class="stat-label">PnL</span><span>$${data.pnl}</span></div>
+        `
+        showPopup('profile')
+    }
+ 
+
+    function addFlipToTable(flip) {
+        const emptyRow = document.getElementById('empty-row')
+        if (emptyRow) emptyRow.remove()
+ 
+        const isOwn = flip.creator === currentUsername
+        const row = document.createElement('tr')
+        row.id = `flip-${flip.coinflip_id || flip.id}`
+        row.innerHTML = `
+            <td><span class="username-link" onclick="viewProfile(${flip.creator_id})">${flip.creator}</span></td>
+            <td>${flip.creator_choice_is_heads ? 'Heads' : 'Tails'}</td>
+            <td>$${flip.wager_amount}</td>
+            <td>${flip.creator_choice_is_heads ? 'Tails' : 'Heads'}</td>
+            <td>${!isOwn ? `<button class="join-btn" onclick="joinFlip(${flip.coinflip_id || flip.id})">Join</button>` : ''}</td>
+        `
+        document.getElementById('coinflip-body').appendChild(row)
+    }
+ 
+    async function removeFlipFromTable(data) {
+        const row = document.getElementById(`flip-${data.coinflip_id}`)
+        
+        if (row) {
+            // update the row to show result
+            row.innerHTML = `
+                <td><span class="username-link" onclick="viewProfile(${data.creator_id})">${data.creator}</span></td>
+                <td>${data.heads_won ? 'Heads' : 'Tails'}</td>
+                <td>$${data.wager_amount}</td>
+                <td>${data.heads_won ? 'Tails' : 'Heads'}</td>
+                <td style="color: darkgreen; font-weight: bold;">${data.winner}</td>
+            `
+            // wait 5 minutes
+            await new Promise(resolve => setTimeout(resolve, 5 * 60 * 1000))
+            
+            // remove the row
+            row.remove()
+            if (document.getElementById('coinflip-body').children.length === 0) {
+                document.getElementById('coinflip-body').innerHTML = '<tr id="empty-row"><td colspan="5">No open coinflips</td></tr>'
+            }
+        }
+    }
+    
+    async function fetchUpdatedBalance() {
+        const response = await fetch('/balance/', {
+            headers: { 'X-CSRFToken': getCookie('csrftoken') }
+        })
+        const data = await response.json()
+        updateBalance(data.balance)
+    }
+
+    function handleSocketMessage(e) {
+        const data = JSON.parse(e.data)
+ 
+        if (data.type === 'initial') {
+            data.coinflips.forEach(flip => addFlipToTable(flip))
+        }
+ 
+        if (data.action === 'created') {
+            addFlipToTable(data)
+        }
+ 
+        if (data.action === 'joined') {
+            removeFlipFromTable(data)
+            if (data.winner === currentUsername) {
+                fetchUpdatedBalance()  
+            }
+            }
+        }
+    }
+ 
+    function handleSocketClose() {
+        setTimeout(() => {
+            socket = new WebSocket('ws://' + window.location.host + '/ws/')
+            socket.onmessage = handleSocketMessage
+            socket.onclose = handleSocketClose
+        }, 3000)
+    }
+ 
+    let socket = new WebSocket('ws://' + window.location.host + '/ws/')
+    socket.onmessage = handleSocketMessage
+    socket.onclose = handleSocketClose
+ 
+
+    renderNavbar()
+</script>
+ 
+</body>
+</html>
