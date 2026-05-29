@@ -409,6 +409,7 @@
         const data = JSON.parse(e.data)
  
         if (data.type === 'initial') {
+            document.getElementById('coinflip-body').innerHTML = '<tr id="empty-row"><td colspan="5">No open coinflips</td></tr>'
             data.coinflips.forEach(flip => addFlipToTable(flip))
         }
  

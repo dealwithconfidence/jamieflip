@@ -211,10 +211,10 @@ def daily_claimed_check(request):
         user = request.user
         today = timezone.now().date()
         
-        if user.previous_daily_claimed is None:
+        if user.daily_claimed is None:
             return JsonResponse({'status': 'available'})
         
-        if user.previous_daily_claimed < today:
+        if user.daily_claimed < today:
             return JsonResponse({'status': 'available'})
         
         return JsonResponse({'status': 'unavailable'})
@@ -227,14 +227,14 @@ def daily_claim(request):
             user = request.user
             today = timezone.now().date()
             
-            if user.previous_daily_claimed is None:
+            if user.daily_claimed is None:
                 with transaction.atomic():
                     user.daily_claimed = timezone.now()
                     user.balance +=100
                     user.save()
                     return JsonResponse({'status': 'ok'})
                 
-            if user.previous_daily_claimed < today:
+            if user.daily_claimed < today:
                 with transaction.atomic():
                     user.daily_claimed = timezone.now()
                     user.balance +=100
