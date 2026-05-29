@@ -232,13 +232,13 @@ def daily_claim(request):
                     user.daily_claimed = timezone.now()
                     user.balance +=100
                     user.save()
-                    return JsonResponse({'status': 'ok'})
+                    return JsonResponse({'status': 'ok', 'new_balance': user.balance})
                 
             if user.daily_claimed.date() < today:
                 with transaction.atomic():
                     user.daily_claimed = timezone.now()
                     user.balance +=100
                     user.save()
-                    return JsonResponse({'status': 'ok'})
+                    return JsonResponse({'status': 'ok', 'new_balance': user.balance})
         except Exception as e:
             return JsonResponse({'error':str(e)}) 
